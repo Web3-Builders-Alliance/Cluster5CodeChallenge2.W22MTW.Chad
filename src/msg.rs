@@ -27,6 +27,6 @@ pub struct GetCountResponse {
 
 #[cw_serde]
 pub enum PacketMsg {
-    Increment { },
+    Increment {},
     Reset { count: i32 },
 }

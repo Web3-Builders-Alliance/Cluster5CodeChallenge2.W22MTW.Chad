@@ -21,7 +21,7 @@ pub fn instantiate(
     let state = State {
         count: msg.count,
         owner: info.sender.clone(),
-        endpoint: None
+        endpoint: None,
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;
@@ -35,33 +35,50 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Increment {} => execute::increment(deps),
-        ExecuteMsg::Reset { count } => execute::reset(deps, info, count),
+        ExecuteMsg::Increment {} => execute::increment(env, deps),
+        ExecuteMsg::Reset { count } => execute::reset(env, deps, info, count),
     }
 }
+
+const PACKET_LIFETIME: u64 = 100_000u64;
 
 pub mod execute {
     use cosmwasm_std::IbcMsg;
 
+    use crate::msg::PacketMsg;
+
     use super::*;
 
-    pub fn increment(deps: DepsMut) -> Result<Response, ContractError> {
+    pub fn increment(env: Env, deps: DepsMut) -> Result<Response, ContractError> {
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             state.count += 1;
             Ok(state)
         })?;
 
-        IbcMsg::SendPacket { channel_id: (), data: (), timeout: env.block.time.plus_seconds(1000u64).into() }
+        let endpoint = STATE.load(deps.storage)?.endpoint.unwrap();
 
-        Ok(Response::new().add_attribute("action", "increment"))
+        let msg = IbcMsg::SendPacket {
+            channel_id: endpoint.channel_id,
+            data: to_binary(&PacketMsg::Increment {})?,
+            timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        };
+
+        Ok(Response::new()
+            .add_attribute("action", "increment")
+            .add_message(msg))
     }
 
-    pub fn reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
+    pub fn reset(
+        env: Env,
+        deps: DepsMut,
+        info: MessageInfo,
+        count: i32,
+    ) -> Result<Response, ContractError> {
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             if info.sender != state.owner {
                 return Err(ContractError::Unauthorized {});
@@ -69,7 +86,19 @@ pub mod execute {
             state.count = count;
             Ok(state)
         })?;
-        Ok(Response::new().add_attribute("action", "reset"))
+
+        let endpoint = STATE.load(deps.storage)?.endpoint.unwrap();
+
+        let msg = IbcMsg::SendPacket {
+            channel_id: endpoint.channel_id,
+            data: to_binary(&PacketMsg::Reset { count })?,
+            timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
+        };
+
+        Ok(Response::new()
+            .add_attribute("action", "reset")
+            .add_attribute("new_count", count.to_string())
+            .add_message(msg))
     }
 }
 

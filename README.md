@@ -1,6 +1,6 @@
 # IBC - Coding Challenge
 
-- [ ] Make the cw-template counter example IBC enabled
+- [x] Make the cw-template counter example IBC enabled
 - [ ] When Increment or Reset is called have it use SendPacket to send the new count over to the contract on the other chain.
 - [ ] The goal is for the state of the contract to be the same on both chains.
 
