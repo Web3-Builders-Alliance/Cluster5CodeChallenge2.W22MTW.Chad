@@ -1,12 +1,10 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, Event,
-    Ibc3ChannelOpenResponse, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcChannelOpenResponse, IbcPacketAckMsg, IbcPacketReceiveMsg,
-    IbcPacketTimeoutMsg, IbcReceiveResponse, QueryRequest, StdResult, SystemResult, Uint128,
-    WasmMsg,
+    entry_point, from_slice, DepsMut, Env, Ibc3ChannelOpenResponse, IbcBasicResponse,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcChannelOpenResponse,
+    IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdResult,
 };
 
-use crate::ibc_helpers::{try_get_ack_error, validate_order_and_version, StdAck};
+use crate::ibc_helpers::{validate_order_and_version, StdAck};
 
 use crate::error::ContractError;
 use crate::msg::PacketMsg;
@@ -16,13 +14,17 @@ use crate::state::STATE;
 pub const IBC_VERSION: &str = "counter-1";
 
 #[entry_point]
-/// enforces ordering and versioing constraints
+/// enforces ordering and versioning constraints
 pub fn ibc_channel_open(
     _deps: DepsMut,
     _env: Env,
     msg: IbcChannelOpenMsg,
 ) -> Result<IbcChannelOpenResponse, ContractError> {
-    validate_order_and_version(msg.channel(), msg.counterparty_version())
+    validate_order_and_version(msg.channel(), msg.counterparty_version())?;
+    // We return the version we need (which could be different than the counterparty version)
+    Ok(Some(Ibc3ChannelOpenResponse {
+        version: IBC_VERSION.to_string(),
+    }))
 }
 
 #[entry_point]

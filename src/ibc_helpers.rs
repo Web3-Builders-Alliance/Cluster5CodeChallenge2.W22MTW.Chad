@@ -1,12 +1,10 @@
 use cosmwasm_std::{
-    from_binary, to_binary, Binary, IbcAcknowledgement, IbcChannel, IbcEndpoint, IbcOrder, from_slice,
+    from_binary, from_slice, to_binary, Binary, IbcAcknowledgement, IbcChannel, IbcEndpoint,
+    IbcOrder,
 };
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::{
-    ibc::IBC_VERSION,
-    ContractError,
-};
+use crate::{ibc::IBC_VERSION, ContractError};
 
 /// Tries to remove the source prefix from a given class_id. If the
 /// class_id does not begin with the given prefix, returns
@@ -139,7 +137,6 @@ pub(crate) fn validate_order_and_version(
 
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {
