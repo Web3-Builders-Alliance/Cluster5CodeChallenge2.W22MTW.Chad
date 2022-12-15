@@ -68,20 +68,11 @@ export async function setupContracts<T extends Record<string, ContractInfo>>(
 }
 
 // This creates a client for the CosmWasm chain, that can interact with contracts
-export async function setupWasmClient(): Promise<CosmWasmSigner> {
+export async function initClient(chain: 'wasmd' | 'osmosis'): Promise<CosmWasmSigner> {
   // create apps and fund an account
   const mnemonic = generateMnemonic();
-  const cosmwasm = await signingCosmWasmClient(wasmd, mnemonic);
+  const cosmwasm = await signingCosmWasmClient(testutils[chain], mnemonic);
   await fundAccount(wasmd, cosmwasm.senderAddress, "4000000");
-  return cosmwasm;
-}
-
-// This creates a client for the CosmWasm chain, that can interact with contracts
-export async function setupOsmosisClient(): Promise<CosmWasmSigner> {
-  // create apps and fund an account
-  const mnemonic = generateMnemonic();
-  const cosmwasm = await signingCosmWasmClient(osmosis, mnemonic);
-  await fundAccount(osmosis, cosmwasm.senderAddress, "4000000");
   return cosmwasm;
 }
 

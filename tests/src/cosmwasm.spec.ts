@@ -32,14 +32,13 @@ const osmosis = { ...oldOsmo, minFee: "0.025uosmo" };
 
 import {
   IbcVersion,
+  initClient,
   setupContracts,
-  setupOsmosisClient,
-  setupWasmClient,
 } from "./utils";
 
 test.before(async (t) => {
   console.debug("Upload & instantiate contracts on wasmd...");
-  const wasmdClient = await setupWasmClient();
+  const wasmdClient = await initClient('wasmd');
   const wasmdContractAddresses = await setupContracts(wasmdClient, wasmdContracts);
   t.truthy(wasmdContractAddresses.counter);
   const { ibcPortId: wasmdPort } = await wasmdClient.sign.getContract(
@@ -49,7 +48,7 @@ test.before(async (t) => {
   assert(wasmdPort);
 
   console.debug("Upload & instantiate contracts on osmosis...");
-  const osmosisClient = await setupOsmosisClient();
+  const osmosisClient = await initClient('osmosis');
   const osmosisContractAddresses = await setupContracts(osmosisClient, osmosisContracts);
   t.truthy(osmosisContractAddresses.counter);
   const { ibcPortId: osmosisPort } = await osmosisClient.sign.getContract(
