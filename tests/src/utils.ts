@@ -17,7 +17,10 @@ const {
   wasmd,
 } = testutils;
 
-const osmosis = { ...oldOsmo, minFee: "0.025uosmo" };
+const chains = {
+  wasmd: testutils.wasmd,
+  osmosis: { ...oldOsmo, minFee: "0.025uosmo" },
+};
 
 export const IbcVersion = "simple-ica-v1";
 
@@ -71,7 +74,7 @@ export async function setupContracts<T extends Record<string, ContractInfo>>(
 export async function initClient(chain: 'wasmd' | 'osmosis'): Promise<CosmWasmSigner> {
   // create apps and fund an account
   const mnemonic = generateMnemonic();
-  const cosmwasm = await signingCosmWasmClient(testutils[chain], mnemonic);
+  const cosmwasm = await signingCosmWasmClient(chains[chain], mnemonic);
   await fundAccount(wasmd, cosmwasm.senderAddress, "4000000");
   return cosmwasm;
 }

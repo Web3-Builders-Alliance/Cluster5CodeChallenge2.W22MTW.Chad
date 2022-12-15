@@ -85,10 +85,10 @@ test.before(async (t) => {
 
 test.serial("query remote chain", async (t) => {
   const {
-    osmosisClient,
+    // osmosisClient,
     wasmdClient,
-    wasmdContractAddresses,
-    osmosisContractAddresses,
+    wasmdContractAddresses: { counter: wasmdCounter },
+    // osmosisContractAddresses: { counter: osmosisCounter },
     link,
     channelIds,
   } = t.context;
@@ -96,50 +96,39 @@ test.serial("query remote chain", async (t) => {
   // Use IBC queries to query info from the remote contract
   const ibcQuery = await wasmdClient.sign.execute(
     wasmdClient.senderAddress,
-    wasmQuerier,
+    wasmdCounter,
     {
-      ibc_query: {
-        channel_id: channelIds.wasm,
-        msgs: [
-          {
-            bank: {
-              all_balances: {
-                address: osmosisClient.senderAddress,
-              },
-            },
-          },
-        ],
-        callback: wasmdCounterAddress,
-      },
+      increment: {},
     },
     "auto"
   );
-  console.log(ibcQuery);
+  console.log({ ibcQuery });
 
   // relay this over
   const info = await link.relayAll();
   console.log(info);
   console.log(fromUtf8(info.acksFromB[0].acknowledgement));
 
-  const result = await wasmdClient.sign.queryContractSmart(wasmQueryReceiver, {
+  const latest_query_result = await wasmdClient.sign.queryContractSmart(wasmdCounter, {
     latest_query_result: {
-      channel_id: channelIds.wasm,
+      channel_id: channelIds.wasmd,
     },
   });
 
-  console.log(result);
+  console.log({ latest_query_result });
+  t.truthy(latest_query_result);
+
   //get all ack data
   const ack_data = JSON.parse(
-    fromUtf8(fromBase64(result.response.acknowledgement.data))
+    fromUtf8(fromBase64(latest_query_result.response.acknowledgement.data))
   );
-  console.log(ack_data);
+  console.log({ ack_data });
   //get all ack results
   const ack_data_results = JSON.parse(fromUtf8(fromBase64(ack_data.result)));
-  console.log(ack_data_results);
+  console.log({ ack_data_results });
   //just grab the first result
   const ok = JSON.parse(fromUtf8(fromBase64(ack_data_results.results[0])));
-  console.log(ok);
+  console.log({ ok });
   //the first result is OK so print it out.
-  console.log(JSON.parse(fromUtf8(fromBase64(ok.ok))));
-  t.truthy(result);
+  console.log('ok.ok:', JSON.parse(fromUtf8(fromBase64(ok.ok))));
 });
