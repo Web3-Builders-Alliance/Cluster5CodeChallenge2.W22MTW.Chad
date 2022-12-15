@@ -21,27 +21,30 @@ const osmosis = { ...oldOsmo, minFee: "0.025uosmo" };
 
 export const IbcVersion = "simple-ica-v1";
 
-export async function setupContracts(
+export async function setupContracts<T extends Record<string, string>>(
   cosmwasm: CosmWasmSigner,
-  contracts: Record<string, string>
-): Promise<Record<string, number>> {
-  const results: Record<string, number> = {};
-
-  for (const name in contracts) {
-    const path = contracts[name];
-    console.info(`Storing ${name} from ${path}...`);
-    const wasm = await readFileSync(path);
-    const receipt = await cosmwasm.sign.upload(
-      cosmwasm.senderAddress,
-      wasm,
-      "auto",
-      `Upload ${name}`
-    );
-    console.debug(`Upload ${name} with CodeID: ${receipt.codeId}`);
-    results[name] = receipt.codeId;
-  }
-
-  return results;
+  contracts: T
+): Promise<{ [K in keyof T]: number }> {
+  const names: (keyof T)[] = Object.keys(contracts)
+  return await names.reduce(
+    async (results, name) => ({
+      ...await results,
+      [name]: await (async () => {
+        const path = contracts[name];
+        console.info(`Storing ${String(name)} from ${path}...`);
+        const wasm = readFileSync(path);
+        const receipt = await cosmwasm.sign.upload(
+          cosmwasm.senderAddress,
+          wasm,
+          "auto",
+          `Upload ${String(name)}`
+        );
+        console.debug(`Upload ${String(name)} with CodeID: ${receipt.codeId}`);
+        return receipt.codeId;
+      })()
+    }),
+    Promise.resolve({} as { [K in keyof T]: number })
+  )
 }
 
 // This creates a client for the CosmWasm chain, that can interact with contracts

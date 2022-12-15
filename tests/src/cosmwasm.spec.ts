@@ -1,8 +1,23 @@
 import { CosmWasmSigner, Link, testutils } from "@confio/relayer";
 import { fromBase64, fromUtf8 } from "@cosmjs/encoding";
 import { assert } from "@cosmjs/utils";
-import test from "ava";
+import anyTest, { ExecutionContext, TestFn } from "ava";
 import { Order } from "cosmjs-types/ibc/core/channel/v1/channel";
+
+const wasmdContracts = {
+  counter: "../artifacts/ibc_counter-aarch64.wasm",
+};
+
+const osmosisContracts = {
+  counter: "../artifacts/ibc_counter-aarch64.wasm",
+};
+
+interface TestContext {
+  wasmdIds: { [K in keyof typeof wasmdContracts]: number },
+  osmosisIds: { [K in keyof typeof osmosisContracts]: number },
+};
+
+const test = anyTest as TestFn<TestContext>
 
 const { osmosis: oldOsmo, setup, wasmd } = testutils;
 const osmosis = { ...oldOsmo, minFee: "0.025uosmo" };
@@ -14,34 +29,24 @@ import {
   setupWasmClient,
 } from "./utils";
 
-let wasmIds: Record<string, number> = {};
-let osmosisIds: Record<string, number> = {};
-
 test.before(async (t) => {
   console.debug("Upload contracts to wasmd...");
-  const wasmContracts = {
-    querier: "../artifacts/cw_ibc_queries.wasm",
-    receiver: "../artifacts/cw_ibc_query_receiver.wasm",
-  };
-  const wasmSign = await setupWasmClient();
-  wasmIds = await setupContracts(wasmSign, wasmContracts);
+  const wasmdSign = await setupWasmClient();
+  const wasmdIds = await setupContracts(wasmdSign, wasmdContracts);
 
   console.debug("Upload contracts to osmosis...");
-  const osmosisContracts = {
-    querier: "../artifacts/cw_ibc_queries.wasm",
-  };
   const osmosisSign = await setupOsmosisClient();
-  osmosisIds = await setupContracts(osmosisSign, osmosisContracts);
+  const osmosisIds = await setupContracts(osmosisSign, osmosisContracts);
 
-  t.pass();
+  t.context = { wasmdIds, osmosisIds };
 });
 
 test.serial("set up channel with ibc-queries contract", async (t) => {
-  // instantiate cw-ibc-queries on wasmd
+  // instantiate counter on wasmd
   const wasmClient = await setupWasmClient();
   const { contractAddress: wasmCont } = await wasmClient.sign.instantiate(
     wasmClient.senderAddress,
-    wasmIds.querier,
+    t.context.wasmdIds.counter,
     { packet_lifetime: 1000 },
     "simple querier",
     "auto"
@@ -53,11 +58,11 @@ test.serial("set up channel with ibc-queries contract", async (t) => {
   t.log(`Querier Port: ${wasmQuerierPort}`);
   assert(wasmQuerierPort);
 
-  // instantiate ica querier on osmosis
+  // instantiate counter on osmosis
   const osmoClient = await setupOsmosisClient();
   const { contractAddress: osmoQuerier } = await osmoClient.sign.instantiate(
     osmoClient.senderAddress,
-    osmosisIds.querier,
+    t.context.osmosisIds.counter,
     { packet_lifetime: 1000 },
     "simple querier",
     "auto"
@@ -97,12 +102,12 @@ interface SetupInfo {
   };
 }
 
-async function demoSetup(): Promise<SetupInfo> {
+async function demoSetup(t: ExecutionContext<TestContext>): Promise<SetupInfo> {
   // instantiate ica querier on wasmd
   const wasmClient = await setupWasmClient();
   const { contractAddress: wasmQuerier } = await wasmClient.sign.instantiate(
     wasmClient.senderAddress,
-    wasmIds.querier,
+    t.context.wasmdIds.counter,
     { packet_lifetime: 1000 },
     "IBC Queries contract",
     "auto"
@@ -116,7 +121,7 @@ async function demoSetup(): Promise<SetupInfo> {
   const { contractAddress: wasmQueryReceiver } =
     await wasmClient.sign.instantiate(
       wasmClient.senderAddress,
-      wasmIds.receiver,
+      t.context.wasmdIds.counter,
       {},
       "IBC Query receiver contract",
       "auto"
@@ -127,7 +132,7 @@ async function demoSetup(): Promise<SetupInfo> {
   const osmoClient = await setupOsmosisClient();
   const { contractAddress: osmoQuerier } = await osmoClient.sign.instantiate(
     osmoClient.senderAddress,
-    osmosisIds.querier,
+    t.context.osmosisIds.counter,
     { packet_lifetime: 1000 },
     "IBC Queries contract",
     "auto"
@@ -186,7 +191,7 @@ test.serial("query remote chain", async (t) => {
     link,
     channelIds,
     wasmQueryReceiver,
-  } = await demoSetup();
+  } = await demoSetup(t);
 
   // Use IBC queries to query info from the remote contract
   const ibcQuery = await wasmClient.sign.execute(
