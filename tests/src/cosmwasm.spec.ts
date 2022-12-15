@@ -4,21 +4,20 @@ import { assert } from "@cosmjs/utils";
 import anyTest, { TestFn } from "ava";
 import { Order } from "cosmjs-types/ibc/core/channel/v1/channel";
 
-const wasmdContracts = {
-  counter: "../artifacts/ibc_counter-aarch64.wasm",
-};
-
-const osmosisContracts = {
-  counter: "../artifacts/ibc_counter-aarch64.wasm",
-};
+const counter = {
+  path: "../artifacts/ibc_counter-aarch64.wasm",
+  instantiateArgs: { count: 0 },
+}
+const wasmdContracts = { counter };
+const osmosisContracts = { counter };
 
 interface TestContext {
-  wasmdCodeIds: { [K in keyof typeof wasmdContracts]: number };
-  osmosisCodeIds: { [K in keyof typeof osmosisContracts]: number };
   wasmdClient: CosmWasmSigner;
+  wasmdContractAddresses: { [K in keyof typeof wasmdContracts]: string };
+
   osmosisClient: CosmWasmSigner;
-  wasmdCounterAddress: string;
-  osmosisCounterAddress: string;
+  osmosisContractAddresses: { [K in keyof typeof osmosisContracts]: string };
+
   link: Link;
   channelIds: {
     wasmd: string;
@@ -41,34 +40,20 @@ import {
 test.before(async (t) => {
   console.debug("Upload & instantiate contracts on wasmd...");
   const wasmdClient = await setupWasmClient();
-  const wasmdCodeIds = await setupContracts(wasmdClient, wasmdContracts);
-  const { contractAddress: wasmdCounterAddress } = await wasmdClient.sign.instantiate(
-    wasmdClient.senderAddress,
-    wasmdCodeIds.counter,
-    { count: 0 },
-    "wasmd counter",
-    "auto"
-  );
-  t.truthy(wasmdCounterAddress);
+  const wasmdContractAddresses = await setupContracts(wasmdClient, wasmdContracts);
+  t.truthy(wasmdContractAddresses.counter);
   const { ibcPortId: wasmdPort } = await wasmdClient.sign.getContract(
-    wasmdCounterAddress
+    wasmdContractAddresses.counter
   );
   t.log({ wasmdPort });
   assert(wasmdPort);
 
   console.debug("Upload & instantiate contracts on osmosis...");
   const osmosisClient = await setupOsmosisClient();
-  const osmosisCodeIds = await setupContracts(osmosisClient, osmosisContracts);
-  const { contractAddress: osmosisCounterAddress } = await osmosisClient.sign.instantiate(
-    osmosisClient.senderAddress,
-    osmosisCodeIds.counter,
-    { count: 0 },
-    "osmosis counter",
-    "auto"
-  );
-  t.truthy(osmosisCounterAddress);
+  const osmosisContractAddresses = await setupContracts(osmosisClient, osmosisContracts);
+  t.truthy(osmosisContractAddresses.counter);
   const { ibcPortId: osmosisPort } = await osmosisClient.sign.getContract(
-    osmosisCounterAddress
+    osmosisContractAddresses.counter
   );
   t.log({ osmosisPort });
   assert(osmosisPort);
@@ -90,12 +75,10 @@ test.before(async (t) => {
   };
 
   t.context = {
-    wasmdCodeIds,
-    osmosisCodeIds,
     wasmdClient,
+    wasmdContractAddresses,
+    osmosisContractAddresses,
     osmosisClient,
-    wasmdCounterAddress,
-    osmosisCounterAddress,
     link,
     channelIds,
   };
@@ -105,7 +88,8 @@ test.serial("query remote chain", async (t) => {
   const {
     osmosisClient,
     wasmdClient,
-    wasmdCounterAddress,
+    wasmdContractAddresses,
+    osmosisContractAddresses,
     link,
     channelIds,
   } = t.context;

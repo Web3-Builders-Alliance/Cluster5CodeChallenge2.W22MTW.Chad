@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { PathLike, readFileSync } from "node:fs";
 
 import {
   AckWithMetadata,
@@ -21,29 +21,49 @@ const osmosis = { ...oldOsmo, minFee: "0.025uosmo" };
 
 export const IbcVersion = "simple-ica-v1";
 
-export async function setupContracts<T extends Record<string, string>>(
+interface ContractInfo {
+  path: PathLike;
+  instantiateArgs: Record<string, unknown>;
+};
+
+/**
+ * Upload wasm bytes and instantiate contract.
+ *
+ * Takes a CosmWasmSigner and an object mapping contract names to {@link
+ * ContractInfo}, returns a matching object with keys now pointing at contract
+ * addresses.
+ */
+export async function setupContracts<T extends Record<string, ContractInfo>>(
   cosmwasm: CosmWasmSigner,
   contracts: T
-): Promise<{ [K in keyof T]: number }> {
+): Promise<{ [K in keyof T]: string }> {
   const names: (keyof T)[] = Object.keys(contracts)
   return await names.reduce(
-    async (results, name) => ({
+    async (results, nameRaw) => ({
       ...await results,
-      [name]: await (async () => {
-        const path = contracts[name];
-        console.info(`Storing ${String(name)} from ${path}...`);
+      [nameRaw]: await (async () => {
+        const name = String(nameRaw);
+        const { path, instantiateArgs } = contracts[name];
+        console.info(`Storing ${name} from ${path}...`);
         const wasm = readFileSync(path);
         const receipt = await cosmwasm.sign.upload(
           cosmwasm.senderAddress,
           wasm,
           "auto",
-          `Upload ${String(name)}`
+          `Upload ${name}`
         );
-        console.debug(`Upload ${String(name)} with CodeID: ${receipt.codeId}`);
-        return receipt.codeId;
+        console.debug(`Upload ${name} with CodeID: ${receipt.codeId}`);
+        const { contractAddress } = await cosmwasm.sign.instantiate(
+          cosmwasm.senderAddress,
+          receipt.codeId,
+          instantiateArgs,
+          name,
+          "auto"
+        );
+        return contractAddress;
       })()
     }),
-    Promise.resolve({} as { [K in keyof T]: number })
+    Promise.resolve({} as { [K in keyof T]: string })
   )
 }
 
