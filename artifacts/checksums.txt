@@ -1,1 +1,1 @@
-81f61ca896253fcd22f072fa61357e350c2123890700b26cb054c33b9c6ff536  ibc_counter-aarch64.wasm
+42b49776c4a5c17dbcd669d5ba7abfb15ceab14f80b175d514f81a7f87fb30c4  ibc_counter-aarch64.wasm
