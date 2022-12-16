@@ -18,16 +18,16 @@ const {
 } = testutils;
 
 const chains = {
-  wasmd: testutils.wasmd,
+  wasmd,
   osmosis: { ...oldOsmo, minFee: "0.025uosmo" },
 };
 
-export const IbcVersion = "simple-ica-v1";
+export const IbcVersion = "counter-1";
 
 interface ContractInfo {
   path: PathLike;
   instantiateArgs: Record<string, unknown>;
-};
+}
 
 /**
  * Upload wasm bytes and instantiate contract.
@@ -40,14 +40,13 @@ export async function setupContracts<T extends Record<string, ContractInfo>>(
   cosmwasm: CosmWasmSigner,
   contracts: T
 ): Promise<{ [K in keyof T]: string }> {
-  const names: (keyof T)[] = Object.keys(contracts)
+  const names: (keyof T)[] = Object.keys(contracts);
   return await names.reduce(
     async (results, nameRaw) => ({
-      ...await results,
+      ...(await results),
       [nameRaw]: await (async () => {
         const name = String(nameRaw);
         const { path, instantiateArgs } = contracts[name];
-        console.info(`Storing ${name} from ${path}...`);
         const wasm = readFileSync(path);
         const receipt = await cosmwasm.sign.upload(
           cosmwasm.senderAddress,
@@ -55,7 +54,6 @@ export async function setupContracts<T extends Record<string, ContractInfo>>(
           "auto",
           `Upload ${name}`
         );
-        console.debug(`Upload ${name} with CodeID: ${receipt.codeId}`);
         const { contractAddress } = await cosmwasm.sign.instantiate(
           cosmwasm.senderAddress,
           receipt.codeId,
@@ -64,18 +62,20 @@ export async function setupContracts<T extends Record<string, ContractInfo>>(
           "auto"
         );
         return contractAddress;
-      })()
+      })(),
     }),
     Promise.resolve({} as { [K in keyof T]: string })
-  )
+  );
 }
 
 // This creates a client for the CosmWasm chain, that can interact with contracts
-export async function initClient(chain: 'wasmd' | 'osmosis'): Promise<CosmWasmSigner> {
+export async function initClient(
+  chain: "wasmd" | "osmosis"
+): Promise<CosmWasmSigner> {
   // create apps and fund an account
   const mnemonic = generateMnemonic();
   const cosmwasm = await signingCosmWasmClient(chains[chain], mnemonic);
-  await fundAccount(wasmd, cosmwasm.senderAddress, "4000000");
+  await fundAccount(chains[chain], cosmwasm.senderAddress, "4000000");
   return cosmwasm;
 }
 
