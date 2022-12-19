@@ -7,7 +7,7 @@ use cosmwasm_std::{
 
 use crate::ibc_helpers::{validate_order_and_version, StdAck};
 
-use crate::contract::execute;
+use crate::contract;
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, PacketMsg};
 use crate::state::STATE;
@@ -90,11 +90,7 @@ pub fn ibc_packet_receive(
 }
 
 pub fn increment(deps: DepsMut, env: Env) -> Result<IbcReceiveResponse, ContractError> {
-    let info = MessageInfo {
-        sender: env.contract.address.clone(),
-        funds: vec![],
-    };
-    execute(deps, env, info, ExecuteMsg::Increment {})?;
+    contract::execute::increment(env, deps)?;
     Ok(IbcReceiveResponse::new()
         .add_attribute("method", "ibc_packet_receive")
         .set_ack(StdAck::success(&"0")))

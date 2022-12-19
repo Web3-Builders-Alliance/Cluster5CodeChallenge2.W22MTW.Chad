@@ -1,5 +1,4 @@
 import { CosmWasmSigner, Link, testutils } from "@confio/relayer";
-import { fromUtf8 } from "@cosmjs/encoding";
 import { assert } from "@cosmjs/utils";
 import anyTest, { TestFn } from "ava";
 import { Order } from "cosmjs-types/ibc/core/channel/v1/channel";
@@ -125,11 +124,7 @@ test.serial(
     t.is(osmosisGetCount.count, 0);
 
     // now relay the message to Osmosis
-    const relayAllResult = await link.relayAll();
-    t.log({
-      relayAllResult,
-      relayAllAckFromB: fromUtf8(relayAllResult.acksFromB[0].acknowledgement),
-    });
+    await link.relayAll();
 
     // wasmd value should stay unchanged
     wasmdGetCount = await wasmdClient.sign.queryContractSmart(wasmdCounter, {
