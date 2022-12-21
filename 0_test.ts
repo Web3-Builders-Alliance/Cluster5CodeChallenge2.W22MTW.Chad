@@ -18,7 +18,7 @@ const recoveryApi = new AxelarGMPRecoveryAPI({
     environment: Environment.TESTNET,
 });
 
-const mnemonic = "";
+const mnemonic = "stick rhythm rabbit slot message spring school major benefit practice beyond pig";
 
 
 async function setupClient(mnemonic: string, rpc: string, gas: string | undefined): Promise<SigningCosmWasmClient> {
@@ -50,7 +50,7 @@ describe("Axelar-js tests", () => {
 
     xit("gets deposit address", async () => {
         let address = await getAddress(mnemonic);
-        
+
     });
 
 });
