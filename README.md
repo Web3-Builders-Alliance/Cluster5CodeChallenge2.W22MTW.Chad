@@ -1,4 +1,6 @@
-# Coding Challenge Instructions Result: https://testnet.axelarscan.io/account/0x79f23812Becd273845253cda065d8911e205FDA1
+# Coding Challenge Instructions
+
+Result: https://testnet.axelarscan.io/account/0x79f23812Becd273845253cda065d8911e205FDA1
 
 - [x] Clone https://github.com/ivmidable/axelar-tests
 - [ ] Generate a new osmosis mnemonic and then save it inside of the 0_tests.ts file
