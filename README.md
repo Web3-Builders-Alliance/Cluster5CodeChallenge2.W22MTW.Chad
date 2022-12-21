@@ -3,7 +3,7 @@
 Result: https://testnet.axelarscan.io/account/0x79f23812Becd273845253cda065d8911e205FDA1
 
 - [x] Clone https://github.com/ivmidable/axelar-tests
-- [ ] Generate a new osmosis mnemonic and then save it inside of the 0_tests.ts file
+- [x] Generate a new osmosis mnemonic and then save it inside of the `0_tests.ts` file
 - [ ] Make sure you have metamask installed and are connected to the polygon testnet
 - [ ] Get uausdc testnet tokens from the Axelar discord “faucet” channel
 - [ ] Import the uausdc ERC20 contract address into metamask

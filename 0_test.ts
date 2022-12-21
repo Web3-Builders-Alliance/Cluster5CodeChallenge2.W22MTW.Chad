@@ -18,7 +18,7 @@ const recoveryApi = new AxelarGMPRecoveryAPI({
     environment: Environment.TESTNET,
 });
 
-const mnemonic = "stick rhythm rabbit slot message spring school major benefit practice beyond pig";
+const mnemonic = "matrix asthma dutch profit young depart toast swim voice code century announce";
 
 
 async function setupClient(mnemonic: string, rpc: string, gas: string | undefined): Promise<SigningCosmWasmClient> {
@@ -43,7 +43,7 @@ async function getAddress(mnemonic: string, prefix: string = 'osmo') {
 
 
 describe("Axelar-js tests", () => {
-    xit("Generate Wallet", async () => {
+    it("Generate Wallet", async () => {
         let wallet = await Secp256k1HdWallet.generate(12);
         console.log(wallet.mnemonic);
     });
