@@ -18,10 +18,6 @@ interface TestContext {
   osmosisContractAddresses: { [K in keyof typeof osmosisContracts]: string };
 
   link: Link;
-  channelIds: {
-    wasmd: string;
-    osmosis: string;
-  };
 }
 
 const test = anyTest as TestFn<TestContext>;
@@ -63,7 +59,7 @@ test.before(async (t) => {
   // create a connection and channel between wasmd chain and osmosis chain
   const [src, dest] = await setup(wasmd, osmosis);
   const link = await Link.createWithNewConnections(src, dest);
-  const channelInfo = await link.createChannel(
+  await link.createChannel(
     "A",
     wasmdPort,
     osmosisPort,
@@ -71,22 +67,16 @@ test.before(async (t) => {
     IbcVersion
   );
 
-  const channelIds = {
-    wasmd: channelInfo.src.channelId,
-    osmosis: channelInfo.src.channelId,
-  };
-
   t.context = {
     wasmdClient,
     wasmdContractAddresses,
     osmosisContractAddresses,
     osmosisClient,
     link,
-    channelIds,
   };
 });
 
-test.serial(
+test(
   "increment wasmd counter; check that both are incremented",
   async (t) => {
     const {
