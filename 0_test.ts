@@ -1,6 +1,11 @@
+import { notStrictEqual } from "node:assert";
 import {
-  AxelarAssetTransfer, AxelarQueryAPI, Environment, CHAINS, AxelarGMPRecoveryAPI, GMPStatusResponse } from "@axelar-network/axelarjs-sdk";
-import { SigningCosmWasmClient, Secp256k1HdWallet, GasPrice } from "cosmwasm";
+  AxelarAssetTransfer,
+  AxelarQueryAPI,
+  Environment,
+  AxelarGMPRecoveryAPI,
+} from "@axelar-network/axelarjs-sdk";
+import { SigningCosmWasmClient, Secp256k1HdWallet } from "cosmwasm";
 
 const osmoRpc = "https://rpc-test.osmosis.zone";
 
@@ -28,12 +33,10 @@ async function getAddress(mnemonic: string, prefix: string = 'osmo') {
   return accounts[0].address;
 }
 
-
-describe("Axelar-js tests", () => {
-  it("gets deposit address", async () => {
-    const address = await getAddress(mnemonic);
-    let client = await setupClient(mnemonic, osmoRpc);
-    let balance = await client.getBalance(address, "uausdc");
-    console.log({ address, balance } );
-  });
+it("check that our wallet has some aUSDC available", async () => {
+  const address = await getAddress(mnemonic);
+  let client = await setupClient(mnemonic, osmoRpc);
+  let balance = await client.getBalance(address, "ausdc");
+  console.log({ address, balance });
+  notStrictEqual(balance.amount, '0');
 });
