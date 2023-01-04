@@ -1,4 +1,5 @@
-import { AxelarAssetTransfer, AxelarQueryAPI, Environment, CHAINS, AxelarGMPRecoveryAPI, GMPStatusResponse } from "@axelar-network/axelarjs-sdk";
+import {
+  AxelarAssetTransfer, AxelarQueryAPI, Environment, CHAINS, AxelarGMPRecoveryAPI, GMPStatusResponse } from "@axelar-network/axelarjs-sdk";
 import { SigningCosmWasmClient, Secp256k1HdWallet, GasPrice } from "cosmwasm";
 
 const osmoRpc = "https://rpc-test.osmosis.zone";
@@ -10,7 +11,6 @@ const axelarAssetTransfer = new AxelarAssetTransfer({
 const axelarQuery = new AxelarQueryAPI({
     environment: Environment.TESTNET,
 });
-
 const recoveryApi = new AxelarGMPRecoveryAPI({
     environment: Environment.TESTNET,
 });
